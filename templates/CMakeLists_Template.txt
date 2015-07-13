@@ -1,0 +1,32 @@
+set(QT_MOC_HEADERS
+#    MainWindow.h
+)
+
+set(QT_MOC_SOURCES
+#    MainWindow.cc
+
+set(QT_UI
+#    MainWindow.ui
+)
+
+set(QT_RESOURCES
+  images.qrc
+  )
+
+set(QT_SRCS
+#    MainWindow.cc
+)
+
+qt5_add_resources(RCS_OUTFILES ${qtui_RESOURCES})
+qt5_wrap_cpp(MOC_OUTFILES ${QT_MOC_HEADERS})
+qt5_wrap_ui(UI_OUTFILES ${QT_UI})
+
+qt5_wrap_cpp(SOURCE_MOC_OUTFILES ${QT_MOC_SOURCES})
+add_custom_target(source_moc_generator DEPENDS ${SOURCE_MOC_OUTFILES})
+
+add_library(fooLib STATIC ${QT_SRCS} ${UI_OUTFILES} ${MOC_OUTFILES} ${RCS_OUTFILES})
+target_link_libraries(fooLib Qt5::Widgets)
+add_dependencies(fooLib source_mock_generator)
+
+add_executable(foo main.cpp)
+target_link_libraries(foo fooLib Qt5::Widgets)

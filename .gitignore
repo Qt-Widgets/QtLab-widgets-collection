@@ -1,0 +1,7 @@
+build/
+GPATH
+GTAGS
+GRTAGS
+cscope.*
+TAGS
+compile_commands.json
