@@ -1,0 +1,9 @@
+#qt5_add_resources(xxx_RES ${CMAKE_CURRENT_SOURCE_DIR}/images.qrc)
+#qt5_add_resources(xxx_RES ${PROJECT_SOURCE_DIR}/images.qrc)
+
+set(xxx_SRCS main.cc xxx.cc)
+
+add_executable(xxx ${xxx_SRCS} ${xxx_RES})
+target_link_libraries(xxx Qt5::Widgets)
+
+add_test(xxx xxx)
