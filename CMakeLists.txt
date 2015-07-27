@@ -9,6 +9,7 @@ include(CommonUtils)
 # activate C++ 11
 add_definitions(-std=c++11)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # Find includes in corresponding build directories
 set(CMAKE_INCLUDE_CURRENT_DIR ON)

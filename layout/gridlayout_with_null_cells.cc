@@ -21,5 +21,20 @@ int main(int argc, char **argv) {
   } else {
     qDebug() << "item is null";
   }
+
+  QLabel* aLabel = new QLabel("test");
+  layout->addWidget(aLabel, 2, 2);
+  qDebug() << "row = " << layout->rowCount() << ", column = " << layout->columnCount() 
+           << ", item count = " << layout->count();
+  
+  layout->takeAt(layout->indexOf(aLabel));
+  qDebug() << "row = " << layout->rowCount() << ", column = " << layout->columnCount()
+           << ", item count = " << layout->count();
+
+  item = layout->itemAtPosition(100, 100);
+  if (item == nullptr) {
+    qDebug() << "(100, 100) has no item";
+  }
+   
   return app.exec();
 }
