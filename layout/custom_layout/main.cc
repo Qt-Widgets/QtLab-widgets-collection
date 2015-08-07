@@ -7,6 +7,8 @@
 
 #include "./relocatable_gridlayout.h"
 
+bool do_shrink = false;
+
 void init_layout(RelocatableGridLayout* layout) {
   // 5 x 5
   for (int row = 0; row < 5; ++row) {
@@ -17,10 +19,7 @@ void init_layout(RelocatableGridLayout* layout) {
   }
 }
 
-void shuffle(RelocatableGridLayout* layout) {
-  int rr = layout->rowCount();
-  int cc = layout->columnCount();
-
+void shuffle(RelocatableGridLayout* layout, int rr, int cc) {
   int start_row = std::rand() % rr;
   int start_col = std::rand() % cc;
   int index = 0;
@@ -31,9 +30,51 @@ void shuffle(RelocatableGridLayout* layout) {
       ++index;
     }
   }
+}
+
+void shrink_layout(RelocatableGridLayout* layout) {
+  shuffle(layout, 5, 5);
+
+  qDebug() << "count = " << layout->count();
+  int count = layout->count();
+  QList<QWidget*> wid_to_remove;
+
+  for (int rm_index = 5 * 5; rm_index < count; ++rm_index) {
+    auto item = layout->itemAt(rm_index);
+    wid_to_remove.append(item->widget());
+  }
+
+  while (!wid_to_remove.isEmpty()) {
+    auto wid = wid_to_remove.takeFirst();
+
+    QLabel* label = qobject_cast<QLabel*>(wid);
+    qDebug() << "remove label: " << label->text();
+
+    layout->removeWidget(wid);
+    wid->deleteLater();
+  }
 
   layout->invalidate();
+
+  do_shrink = false;
 }
+
+void enlarge_layout(RelocatableGridLayout* layout) {
+  shuffle(layout, 5, 5);
+
+  for (int row = 0; row < 5; ++row) {
+    layout->addWidget(new QLabel(QString("layout1: %1 x %2").arg(row).arg(5)),
+                      row, 5);
+  }
+
+  for (int col = 0; col < 6; ++col) {
+    layout->addWidget(new QLabel(QString("layout1: %1 x %2").arg(5).arg(col)),
+                      5, col);
+  }
+
+  do_shrink = true;
+}
+
 
 int main(int argc, char **argv) {
   QApplication app(argc, argv);
@@ -57,7 +98,11 @@ int main(int argc, char **argv) {
 
   QObject::connect(button, &QPushButton::clicked,
                    [layout]() {
-                     shuffle(layout);
+                     if (do_shrink) {
+                       shrink_layout(layout);
+                     } else {
+                       enlarge_layout(layout);
+                     }
                    });
   QObject::connect(overlap_btn, &QPushButton::clicked,
                    [layout]() {
