@@ -32,4 +32,5 @@ AUTO_ADD_SIMPLE_TARGETS()
 
 add_subdirectory(sdi2)
 add_subdirectory(layout)
+add_subdirectory(widgets)
 add_subdirectory(qtoolbutton_defaultaction)
