@@ -17,6 +17,7 @@
 #include <QTreeView>
 #include <QComboBox>
 #include <QStandardItemModel>
+#include <QPushButton>
 
 #include "./custom_update_line_edit.h"
 #include "./treemodelcompleter.h"
@@ -24,6 +25,27 @@
 #include "./recent_all_line_edit.h"
 #include "candidate_item_model.h"
 #include "tree_combobox.h"
+#include "widget_wrapper.h"
+
+class MyButton : public QPushButton {
+ public:
+  explicit MyButton(QWidget* parent = nullptr) : QPushButton(parent) { }
+
+  void mousePressEvent(QMouseEvent *e) {
+    qDebug() << "MyButton mouse press event";
+    QPushButton::mousePressEvent(e);
+  }
+};
+
+class MyLineEdit : public QLineEdit {
+ public:
+  explicit MyLineEdit(QWidget* parent = nullptr) : QLineEdit(parent) { }
+
+  void mousePressEvent(QMouseEvent *e) {
+    qDebug() << "MyLineEdit mouse press event";
+    QLineEdit::mousePressEvent(e);
+  }
+};
 
 class MainWindow : public QMainWindow {
   Q_OBJECT
@@ -31,6 +53,11 @@ class MainWindow : public QMainWindow {
  public:
   explicit MainWindow(QWidget *parent = 0);
   ~MainWindow();
+
+  void mousePressEvent(QMouseEvent *e) {
+    qDebug() << "MainWindow mouse press event";
+    QMainWindow::mousePressEvent(e);
+  }
 };
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -41,6 +68,14 @@ MainWindow::MainWindow(QWidget *parent) :
 
   QWidget* widget = new QWidget(this);
   QVBoxLayout* layout = new QVBoxLayout(widget);
+
+  auto mybutton = new MyButton(widget);
+  layout->addWidget(mybutton);
+  layout->addSpacing(10);
+
+  auto mylineedit = new MyLineEdit(widget);
+  layout->addWidget(mylineedit);
+  layout->addSpacing(10);
 
   layout->addWidget(new QLabel("Custom Update Completer: "));
   auto custom_update_line_edit = new LineEditWithCustomUpdateCompleter(widget);
@@ -94,12 +129,22 @@ MainWindow::MainWindow(QWidget *parent) :
   treeLineEdit->setCompleter(treecompleter);
 
   layout->addWidget(treeLineEdit);
-  layout->addSpacing(50);
+  layout->addSpacing(100);
 
   //////////////////////////////////////
+  layout->addWidget(new QLabel("Tree Combobox"));
   auto tree_combobox = new TreeComboBox(widget);
   tree_combobox->setModel(model);
-  layout->addWidget(tree_combobox);
+  tree_combobox->setEditable(true);
+  // tree_combobox->lineEdit()->setText("haha");
+  // tree_combobox->lineEdit()->clear();
+
+  auto tree_combobox_wrapper = new WidgetWrapper(widget);
+  tree_combobox_wrapper->setWidget(tree_combobox);
+
+  layout->addWidget(tree_combobox_wrapper);
+
+  //layout->addWidget(tree_combobox);
   layout->addSpacing(50);
 
 
@@ -116,7 +161,17 @@ MainWindow::MainWindow(QWidget *parent) :
     QStringLiteral("one"),
         QStringLiteral("two"),
         QStringLiteral("three"),
-        QStringLiteral("four") };
+        QStringLiteral("four"),
+        QStringLiteral("four"),
+        QStringLiteral("four"),
+        QStringLiteral("four"),
+        QStringLiteral("four"),
+        QStringLiteral("four"),
+        QStringLiteral("four"),
+        QStringLiteral("four"),
+        QStringLiteral("four"),
+        QStringLiteral("four"),
+        QStringLiteral("four")};
 
   static QStringListModel empty_word_list_model(empty_word_list);
   static QStringListModel non_empty_word_list_model(non_empty_word_list);
@@ -132,6 +187,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
   auto combobox = new QComboBox(widget);
   combobox->addItems(non_empty_word_list);
+  combobox->setMaxVisibleItems(5);
   combobox->setEditable(true);
   combobox->completer()->setCompletionMode(QCompleter::PopupCompletion);
   QObject::connect(combobox, &QComboBox::editTextChanged,
