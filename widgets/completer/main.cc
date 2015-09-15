@@ -92,6 +92,8 @@ MainWindow::MainWindow(QWidget *parent) :
   auto root_root_item = new CandidateItem();
 
   auto root_item = new CandidateItem("root", "", root_root_item);
+  new CandidateItem("two", "", root_root_item);
+  new CandidateItem("three", "", root_root_item);
 
   auto foo = new CandidateItem("foo", "", root_item);
   new CandidateItem("Mark", "", foo);
@@ -135,8 +137,8 @@ MainWindow::MainWindow(QWidget *parent) :
   layout->addWidget(new QLabel("Tree Combobox"));
   auto tree_combobox = new TreeComboBox(widget);
   tree_combobox->setModel(model);
-  tree_combobox->setEditable(true);
-  // tree_combobox->lineEdit()->setText("haha");
+  // tree_combobox->doSetEditable(true);
+  // tree_combobox->lineEdit()->setText("root");
   // tree_combobox->lineEdit()->clear();
 
   auto tree_combobox_wrapper = new WidgetWrapper(widget);

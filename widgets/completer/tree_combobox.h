@@ -15,6 +15,8 @@
 #include <QModelIndex>
 #include <QHeaderView>
 
+class QPushButton;
+
 class TreeComboBox : public QComboBox {
   Q_OBJECT
 
@@ -28,6 +30,8 @@ class TreeComboBox : public QComboBox {
 
   void mousePressEvent(QMouseEvent *e);
 
+  void doSetEditable(bool editable);
+
  private slots:
   void on_currentIndexChanged(int index);
   void on_editTextChanged(const QString &);
@@ -38,9 +42,13 @@ class TreeComboBox : public QComboBox {
   void on_currentIndexChanged(const QString &);
   void on_currentTextChanged(const QString &);
 
+  void on_editingFinished();
+
 
  private:
   bool skipNextHide;
+  QPushButton* add_more_button { nullptr };
+  QLineEdit* search_lineedit { nullptr };
 };
 
 #endif  // TREE_COMBOBOX_H_

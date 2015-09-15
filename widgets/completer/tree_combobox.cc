@@ -6,6 +6,10 @@
 // [Desc]
 #include "./tree_combobox.h"
 
+#include <QLineEdit>
+#include <QBoxLayout>
+#include <QLayoutItem>
+#include <QPushButton>
 #include <QDebug>
 
 class QtTreeView : public QTreeView {
@@ -68,17 +72,43 @@ bool TreeComboBox::eventFilter(QObject* object, QEvent* event)
 
 void TreeComboBox::keyPressEvent(QKeyEvent *e) {
   switch (e->key()) {
+    case Qt::Key_Up:
+      if (e->modifiers() & Qt::ControlModifier)
+        break;
+      // else fall throuth
     case Qt::Key_PageUp:
+      e->ignore();
+      return;
+
+    case Qt::Key_Down:
+      if ((e->modifiers() & Qt::AltModifier) ||
+          (e->modifiers() & Qt::ControlModifier))
+        break;
+      // else fall through
     case Qt::Key_PageDown:
       // NOTE: maybe we can call view()->moveCursor() here
       // then emit itemSelected(new_index)
       // but currently we do not have this requirement,
       // so just ignore these events
       e->ignore();
-      break;
+      return;
+    case Qt::Key_Home:
+      if (!lineEdit()) {
+        e->ignore();
+        return;
+      }
+
+    case Qt::Key_End:
+      if (!lineEdit()) {
+        e->ignore();
+        return;
+      }
     default:
-      QComboBox::keyPressEvent(e);
+      // do nothing
+      ;
   }
+
+  QComboBox::keyPressEvent(e);
 }
 
 void TreeComboBox::showPopup()
@@ -92,6 +122,37 @@ void TreeComboBox::showPopup()
   // by default tree will show as 1 line high, need to reserve room
   treeView->setMaximumHeight(fix_height);
   treeView->setMinimumHeight(fix_height);
+  QWidget* treeView_parent = treeView->parentWidget();
+  QBoxLayout* container_layout = qobject_cast<QBoxLayout*>(treeView_parent->layout());
+  bool push_button_already_added = false;
+  bool search_lineedit_already_added = false;
+  if (container_layout) {
+    qDebug() << "layout count = " << container_layout->count();
+    for (int i = 0; i < container_layout->count(); ++i) {
+      QLayoutItem *item = container_layout->itemAt(i);
+      if (item->widget()) {
+        qDebug() << "widget: " << item->widget();
+
+        if (item->widget() == add_more_button) {
+          push_button_already_added = true;
+        }
+
+        if (item->widget() == search_lineedit) {
+          search_lineedit_already_added = true;
+        }
+      }
+    }
+
+    if (!search_lineedit_already_added) {
+      search_lineedit = new QLineEdit("type to search", treeView_parent);
+      container_layout->insertWidget(0, search_lineedit);
+    }
+
+    if (!push_button_already_added) {
+      add_more_button = new QPushButton("Add More......", treeView_parent);
+      container_layout->addWidget(add_more_button);
+    }
+  }
   QComboBox::showPopup();
 }
 
@@ -111,6 +172,14 @@ void TreeComboBox::hidePopup()
 void TreeComboBox::mousePressEvent(QMouseEvent *e) {
   qDebug() << "TreeComboBox mouse press event";
   QComboBox::mousePressEvent(e);
+}
+
+void TreeComboBox::doSetEditable(bool editable) {
+  setEditable(editable);
+  if (editable) {
+    connect(lineEdit(), SIGNAL(editingFinished()),
+            this, SLOT(on_editingFinished()));
+  }
 }
 
 void TreeComboBox::on_currentIndexChanged(int index) {
@@ -148,4 +217,10 @@ void TreeComboBox::on_currentIndexChanged(const QString &text) {
 
 void TreeComboBox::on_currentTextChanged(const QString &text) {
   qDebug() << "currentTextChanged: text = " << text;
+}
+
+void TreeComboBox::on_editingFinished() {
+  qDebug() << "editing finished: text = " << lineEdit()->text();
+  QModelIndex curr_index = view()->currentIndex();
+  qDebug() << "current index: " << curr_index << ", text = " << curr_index.data(Qt::DisplayRole).toString();
 }
