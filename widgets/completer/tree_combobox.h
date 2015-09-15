@@ -29,6 +29,7 @@ class TreeComboBox : public QComboBox {
   void hidePopup() override;
 
   void mousePressEvent(QMouseEvent *e);
+  void wheelEvent(QWheelEvent *e);
 
   void doSetEditable(bool editable);
 

@@ -111,6 +111,10 @@ void TreeComboBox::keyPressEvent(QKeyEvent *e) {
   QComboBox::keyPressEvent(e);
 }
 
+void TreeComboBox::wheelEvent(QWheelEvent *e) {
+  (void)e;
+}
+
 void TreeComboBox::showPopup()
 {
   // setRootModelIndex(QModelIndex());
