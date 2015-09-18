@@ -28,6 +28,8 @@ class CandidateItemModel : public QAbstractItemModel {
   int rowCount(const QModelIndex &parent = QModelIndex()) const;
   int columnCount(const QModelIndex &parent = QModelIndex()) const;
 
+  void reset();
+
  private:
   Q_DISABLE_COPY(CandidateItemModel)
 

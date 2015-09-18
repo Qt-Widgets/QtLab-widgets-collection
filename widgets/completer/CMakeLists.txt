@@ -11,6 +11,9 @@ set(completer_demo_SRCS
   treemodelcompleter.cc
   tree_combobox.cc
   widget_wrapper.cc
+  widgetpopup.cpp
+  qtlineedit.cc
+  qtcompleter.cc
   )
 
 add_executable(completer_demo ${completer_demo_SRCS} ${completer_demo_RES})

@@ -49,6 +49,14 @@ class CandidateItem {
     selectable_ = false;
   }
 
+  bool isEnabled() const {
+    return enabled_;
+  }
+
+  void setEnabled(bool enabled) {
+    enabled_ = enabled;
+  }
+
   CandidateItem* parent() const {
     return parent_;
   }
@@ -120,6 +128,7 @@ class CandidateItem {
   QString description_;
   CandidateItem* parent_ { nullptr };
   bool selectable_ { true };
+  bool enabled_ { true };
 
   std::vector<CandidateItem*> children_;
 };

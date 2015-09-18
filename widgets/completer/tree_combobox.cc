@@ -29,6 +29,8 @@ TreeComboBox::TreeComboBox(QWidget* parent)
   view()->viewport()->installEventFilter(this);
   QComboBox::resize(200, 30);
 
+  qDebug() << "has auto scroll: " << treeView->hasAutoScroll();
+
   setInsertPolicy(QComboBox::NoInsert);
 
   connect(this, SIGNAL(currentIndexChanged(int)),

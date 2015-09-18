@@ -26,6 +26,8 @@
 #include "candidate_item_model.h"
 #include "tree_combobox.h"
 #include "widget_wrapper.h"
+#include "qtlineedit.h"
+#include "qtcompleter.h"
 
 class MyButton : public QPushButton {
  public:
@@ -77,15 +79,6 @@ MainWindow::MainWindow(QWidget *parent) :
   layout->addWidget(mylineedit);
   layout->addSpacing(10);
 
-  layout->addWidget(new QLabel("Custom Update Completer: "));
-  auto custom_update_line_edit = new LineEditWithCustomUpdateCompleter(widget);
-  auto custom_update_completer = new CustomUpdateCompleter(wordList, widget);
-  custom_update_completer->setCaseSensitivity(Qt::CaseInsensitive);
-  custom_update_line_edit->setCompleter(custom_update_completer);
-
-  layout->addWidget(custom_update_line_edit);
-  layout->addSpacing(50);
-
   ///////////////////////////////
   layout->addWidget(new QLabel("TreeModelCompleter: "));
 
@@ -108,6 +101,7 @@ MainWindow::MainWindow(QWidget *parent) :
   new CandidateItem("Lasse", "", bar);
 
   auto baz = new CandidateItem("baz", "", root_item);
+  baz->setEnabled(false);
   new CandidateItem("Bengt", "", baz);
   new CandidateItem("Sven", "", baz);
 
@@ -131,7 +125,7 @@ MainWindow::MainWindow(QWidget *parent) :
   treeLineEdit->setCompleter(treecompleter);
 
   layout->addWidget(treeLineEdit);
-  layout->addSpacing(100);
+  layout->addSpacing(20);
 
   //////////////////////////////////////
   layout->addWidget(new QLabel("Tree Combobox"));
@@ -146,8 +140,49 @@ MainWindow::MainWindow(QWidget *parent) :
 
   layout->addWidget(tree_combobox_wrapper);
 
+  QPushButton* reset_btn = new QPushButton("reset");
+  connect(reset_btn, &QPushButton::clicked,
+          [model]() {
+            model->reset();
+          });
+  layout->addWidget(reset_btn);
+
+  auto normal_combobox = new QComboBox();
+  normal_combobox->addItem("Some Text");
+  layout->addWidget(normal_combobox);
+
+  QPushButton* change_text_btn = new QPushButton("Change Text");
+  connect(change_text_btn, &QPushButton::clicked,
+          [normal_combobox]() {
+            normal_combobox->setItemText(0, "haha");
+          });
+  layout->addWidget(change_text_btn);
+
   //layout->addWidget(tree_combobox);
-  layout->addSpacing(50);
+  layout->addSpacing(20);
+
+  ////////////////////////////////////////////////
+
+  layout->addWidget(new QLabel("Custom Update Completer: "));
+  auto custom_update_line_edit = new LineEditWithCustomUpdateCompleter(widget);
+  auto custom_update_completer = new CustomUpdateCompleter(wordList, widget);
+  custom_update_completer->setCaseSensitivity(Qt::CaseInsensitive);
+  custom_update_line_edit->setCompleter(custom_update_completer);
+
+  layout->addWidget(custom_update_line_edit);
+  layout->addSpacing(20);
+
+  ////////////////////////////////////////////////
+  layout->addWidget(new QLabel("LineEdit with Custom Completer"));
+  auto line_edit = new QtLineEdit(widget);
+  QtCompleter *qt_completer = new QtCompleter(widget);
+  qt_completer->setModel(model);
+  auto atreeview = new QTreeView(widget);
+  atreeview->header()->hide();
+  qt_completer->setPopup(atreeview);
+  line_edit->setQtCompleter(qt_completer);
+  layout->addWidget(line_edit);
+  layout->addSpacing(20);
 
 
   /////////////////////////////////////////
@@ -163,16 +198,6 @@ MainWindow::MainWindow(QWidget *parent) :
     QStringLiteral("one"),
         QStringLiteral("two"),
         QStringLiteral("three"),
-        QStringLiteral("four"),
-        QStringLiteral("four"),
-        QStringLiteral("four"),
-        QStringLiteral("four"),
-        QStringLiteral("four"),
-        QStringLiteral("four"),
-        QStringLiteral("four"),
-        QStringLiteral("four"),
-        QStringLiteral("four"),
-        QStringLiteral("four"),
         QStringLiteral("four")};
 
   static QStringListModel empty_word_list_model(empty_word_list);

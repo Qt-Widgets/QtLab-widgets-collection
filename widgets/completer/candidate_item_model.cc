@@ -6,6 +6,7 @@
 // [Desc]
 #include "candidate_item_model.h"
 #include "candidate_item.h"
+#include <QDebug>
 
 const CandidateItem*
 CandidateItemModel::itemOfIndex(const QModelIndex& index) const {
@@ -17,7 +18,6 @@ CandidateItemModel::itemOfIndex(const QModelIndex& index) const {
 
 QVariant CandidateItemModel::data(
     const QModelIndex &index, int role) const {
-  (void)role;
   if (!index.isValid())
     return QVariant();
 
@@ -43,6 +43,8 @@ Qt::ItemFlags CandidateItemModel::flags(
   auto item = itemOfIndex(index);
   if (!item->isSelectable())
     flags &= ~Qt::ItemIsSelectable;
+  if (!item->isEnabled())
+    flags &= ~Qt::ItemIsEnabled;
 
   return flags;
 }
@@ -85,4 +87,9 @@ int CandidateItemModel::rowCount(const QModelIndex &parent) const {
 int CandidateItemModel::columnCount(const QModelIndex &parent) const {
   (void)parent;
   return 1;
+}
+
+void CandidateItemModel::reset() {
+  beginResetModel();
+  endResetModel();
 }
