@@ -7,7 +7,7 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Modules)
 include(CommonUtils)
 
 # activate C++ 11
-add_definitions(-std=c++11)
+add_definitions(-std=c++11 -g)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
