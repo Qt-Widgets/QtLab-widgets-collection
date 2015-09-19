@@ -19,42 +19,12 @@
 #include <QItemDelegate>
 #include <QDebug>
 
+namespace {
+
 template<typename T, typename... Args>
 std::unique_ptr<T> make_unique(Args&&... args) {
   return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
-
-namespace {
-
-class IdentityItemViewContainer : public QFrame
-                                , public ICompleterItemViewContainer {
-  Q_OBJECT
-
- public:
-  IdentityItemViewContainer(QAbstractItemView* item_view)
-      : item_view_(item_view) { }
-
-  QAbstractItemView* getItemView() const {
-    return item_view_;
-  }
-
-  QWidget* getItemViewContainer() {
-    return this;
-  }
-
-  void setItemView(QAbstractItemView* item_view) {
-    connect(item_view, SIGNAL(destroyed()),
-            this, SLOT(viewDestroyed()));
-  }
-
- private slots:
-  void viewDestroyed() {
-    item_view_ = nullptr;
-  }
-
- private:
-  QAbstractItemView* item_view_;
-};
 
 class QCompleterItemDelegate : public QItemDelegate {
  public:
@@ -86,20 +56,18 @@ class QtCompleterImpl : public QObject {
   QString itemText(const QModelIndex &index) const;
 
  public slots:
-  void _q_completionSelected(const QItemSelection& selection);
-  void _q_complete(QModelIndex index, bool highlighted = false);
-  void _q_autoResizePopup(const QModelIndex &parent, int first, int last);
+  void hightlighted(const QItemSelection& selection);
+  void autoResizePopup(const QModelIndex &parent, int first, int last);
 
  public:
   QPointer<QWidget> widget;
   QAbstractItemModel* model { nullptr };
   QAbstractItemView* popup { nullptr };
-  // IComplexCompleterPopup* complex_popup { nullptr };
 
   bool eatFocusOut;
   QRect popupRect;
 
-  QString filter_pattern;
+  QString filter_pattern_;
   // TODO(lutts): should be able to set the expect column by the client
   int column { 0 };
   int maxVisibleItems { 10 };
@@ -132,37 +100,22 @@ void QtCompleterImpl::setCurrentIndex(QModelIndex index, bool select)
     popup->scrollTo(index, QAbstractItemView::PositionAtTop);
 }
 
-void QtCompleterImpl::_q_completionSelected(const QItemSelection& selection)
-{
+void QtCompleterImpl::hightlighted(const QItemSelection& selection) {
   QModelIndex index;
   if (!selection.indexes().isEmpty())
     index = selection.indexes().first();
 
-  _q_complete(index, true);
+  emit q->highlighted(index);
 }
 
-QString QtCompleterImpl::itemText(const QModelIndex &index) const
-{
+QString QtCompleterImpl::itemText(const QModelIndex &index) const {
   return index.isValid()
       ? model->data(index, Qt::DisplayRole).toString()
-      : filter_pattern;
+      : QString();
 }
 
-void QtCompleterImpl::_q_complete(QModelIndex index, bool highlighted)
-{
-  QString completion = itemText(index);
-
-  if (highlighted) {
-    emit q->highlighted(index);
-    emit q->highlighted(completion);
-  } else {
-    emit q->activated(index);
-    emit q->activated(completion);
-  }
-}
-
-void QtCompleterImpl::_q_autoResizePopup(const QModelIndex &parent, int first, int last)
-{
+void QtCompleterImpl::autoResizePopup(
+    const QModelIndex &parent, int first, int last) {
   (void)parent;
   (void)first;
   (void)last;
@@ -182,9 +135,9 @@ void QtCompleterImpl::showPopup(const QRect& rect)
   Qt::LayoutDirection dir = widget->layoutDirection();
   QPoint pos;
   int rh, w;
-  // TODO(lutts): for tree view, we can not use row count
+
   int visibleItems = 0;
-  if (QTreeView *tree_view = qobject_cast<QTreeView *>(popup)) {
+  if (qobject_cast<QTreeView *>(popup)) {
     visibleItems = maxVisibleItems;
   } else {
     visibleItems = qMin(maxVisibleItems, popup->model()->rowCount());
@@ -276,8 +229,8 @@ void QtCompleter::setModel(QAbstractItemModel* model) {
   if (d->popup)
     setPopup(d->popup);
 
-  QObject::connect(model, SIGNAL(rowsInserted(const QModelIndex &, int, int)),
-                   d.get(), SLOT(_q_autoResizePopup(const QModelIndex &, int, int)));
+  connect(model, SIGNAL(rowsInserted(const QModelIndex &, int, int)),
+          d.get(), SLOT(autoResizePopup(const QModelIndex &, int, int)));
 }
 
 QAbstractItemModel* QtCompleter::model() const {
@@ -296,15 +249,15 @@ QAbstractItemView* QtCompleter::popup() const {
     QtCompleter *that = const_cast<QtCompleter*>(this);
     that->setPopup(listView);
   }
-#endif // QT_NO_LISTVIEW
+#endif  // QT_NO_LISTVIEW
 
   return d->popup;
 }
 
 void QtCompleter::setPopup(QAbstractItemView* popup) {
   if (d->popup) {
-    QObject::disconnect(d->popup->selectionModel(), 0, this, 0);
-    QObject::disconnect(d->popup, 0, this, 0);
+    disconnect(d->popup->selectionModel(), 0, d.get(), 0);
+    disconnect(d->popup, 0, this, 0);
   }
 
   if (d->popup != popup)
@@ -331,6 +284,10 @@ void QtCompleter::setPopup(QAbstractItemView* popup) {
   popup->setFocusProxy(d->widget);
   popup->installEventFilter(this);
   popup->setItemDelegate(new QCompleterItemDelegate(popup));
+  // popup->setMouseTracking(true);
+  popup->setTextElideMode(Qt::ElideMiddle);
+  popup->setSelectionMode(QAbstractItemView::SingleSelection);
+  popup->setEditTriggers(QAbstractItemView::NoEditTriggers);
 #ifndef QT_NO_LISTVIEW
   if (QListView *listView = qobject_cast<QListView *>(popup)) {
     listView->setModelColumn(d->column);
@@ -338,12 +295,10 @@ void QtCompleter::setPopup(QAbstractItemView* popup) {
 #endif
 
   QObject::connect(popup, SIGNAL(clicked(QModelIndex)),
-                   d.get(), SLOT(_q_complete(QModelIndex)));
-  QObject::connect(this, SIGNAL(activated(QModelIndex)),
-                   popup, SLOT(hide()));
-
-  QObject::connect(popup->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)),
-                   d.get(), SLOT(_q_completionSelected(QItemSelection)));
+                   this, SIGNAL(clicked(QModelIndex)));
+  QObject::connect(popup->selectionModel(),
+                   SIGNAL(selectionChanged(QItemSelection,QItemSelection)),
+                   d.get(), SLOT(hightlighted(QItemSelection)));
   d->popup = popup;
 }
 
@@ -356,7 +311,12 @@ void QtCompleter::setMaxVisibleItems(int maxItems) {
 }
 
 void QtCompleter::setFilterPattern(const QString& filter_pattern) {
+  d->filter_pattern_ = filter_pattern;
   emit filterPatternChanged(filter_pattern);
+}
+
+QString QtCompleter::filterPattern() const {
+  return d->filter_pattern_;
 }
 
 void QtCompleter::complete(const QRect& rect) {
@@ -373,6 +333,10 @@ void QtCompleter::complete(const QRect& rect) {
 
   d->showPopup(rect);
   d->popupRect = rect;
+}
+
+void QtCompleter::hidePopup() const {
+  d->popup->hide();
 }
 
 // TODO(lutts): keypad navigation related code is removed
@@ -400,11 +364,20 @@ bool QtCompleter::eventFilter(QObject *o, QEvent *e) {
 
       QModelIndexList selList = d->popup->selectionModel()->selectedIndexes();
 
+#if 0
+      qDebug() << "selList.isEmpty: " << selList.isEmpty()
+               << ", curIndex: " << curIndex.isValid()
+               << ", curText: " << curIndex.data(Qt::DisplayRole).toString();
+#endif
+
       const int key = ke->key();
       // select the current item
       if ((key == Qt::Key_Up || key == Qt::Key_Down) && selList.isEmpty() && curIndex.isValid()) {
+        if ((curIndex.flags() & Qt::ItemIsEnabled)
+            && (curIndex.flags() & Qt::ItemIsSelectable)) {
         d->setCurrentIndex(curIndex);
         return true;
+        }
       }
 
       // Handle popup navigation keys. These are hardcoded because up/down might make the
@@ -418,13 +391,11 @@ bool QtCompleter::eventFilter(QObject *o, QEvent *e) {
 
         case Qt::Key_Up:
           if (!curIndex.isValid()) {
-            if (d->popup) {
-              QKeyEvent event(QEvent::KeyPress, Qt::Key_End, Qt::NoModifier);
-              (static_cast<QObject *>(d->popup))->event(&event);
-            }
+            QKeyEvent event(QEvent::KeyPress, Qt::Key_End, Qt::NoModifier);
+            (static_cast<QObject *>(d->popup))->event(&event);
             return true;
           } else if ((curIndex.row() == 0) && (curIndex.parent().row() == -1)) {
-            if (d->wrap && d->popup) {
+            if (d->wrap) {
               QKeyEvent event(QEvent::KeyPress, Qt::Key_End, Qt::NoModifier);
               (static_cast<QObject *>(d->popup))->event(&event);
             }
@@ -434,12 +405,10 @@ bool QtCompleter::eventFilter(QObject *o, QEvent *e) {
 
         case Qt::Key_Down:
           if (!curIndex.isValid()) {
-            if (d->popup) {
-              QKeyEvent event(QEvent::KeyPress, Qt::Key_Home, Qt::NoModifier);
-              (static_cast<QObject *>(d->popup))->event(&event);
-            }
+            QKeyEvent event(QEvent::KeyPress, Qt::Key_Home, Qt::NoModifier);
+            (static_cast<QObject *>(d->popup))->event(&event);
             return true;
-          } else if (d->popup) {
+          } else {
             QKeyEvent event(QEvent::KeyPress, Qt::Key_Down, Qt::NoModifier);
             (static_cast<QObject *>(d->popup))->event(&event);
             if (!event.isAccepted()) {
@@ -465,8 +434,9 @@ bool QtCompleter::eventFilter(QObject *o, QEvent *e) {
       d->eatFocusOut = true;
       if (!d->widget || e->isAccepted() || !d->popup->isVisible()) {
         // widget lost focus, hide the popup
-        if (d->widget && (!d->widget->hasFocus()))
+        if (d->widget && (!d->widget->hasFocus())) {
           d->popup->hide();
+        }
         if (e->isAccepted())
           return true;
       }
@@ -478,7 +448,7 @@ bool QtCompleter::eventFilter(QObject *o, QEvent *e) {
         case Qt::Key_Tab:
           d->popup->hide();
           if (curIndex.isValid())
-            d->_q_complete(curIndex);
+            emit clicked(curIndex);
           break;
 
         case Qt::Key_F4:
@@ -497,6 +467,18 @@ bool QtCompleter::eventFilter(QObject *o, QEvent *e) {
 
       return true;
     }
+
+#if 0
+    case QEvent::MouseMove:
+      if (d->popup->isVisible()) {
+        QMouseEvent *m = static_cast<QMouseEvent *>(e);
+        QModelIndex indexUnderMouse = d->popup->indexAt(m->pos());
+        if (indexUnderMouse.isValid()) {
+          d->popup->setCurrentIndex(indexUnderMouse);
+        }
+      }
+      break;
+#endif
 
     case QEvent::MouseButtonPress: {
       if (!d->popup->underMouse()) {

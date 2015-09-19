@@ -18,14 +18,6 @@ class QAbstractItemView;
 class QString;
 class QModelIndex;
 
-class ICompleterItemViewContainer {
- public:
-  virtual ~ICompleterItemViewContainer() = default;
-
-  virtual QAbstractItemView* getItemView() const = 0;
-  virtual QWidget* getItemViewContainer() = 0;
-};
-
 class QtCompleterImpl;
 
 class QtCompleter : public QObject {
@@ -45,17 +37,17 @@ class QtCompleter : public QObject {
   void setPopup(QAbstractItemView* popup);
   QAbstractItemView* popup() const;
 
-  // void setComplexPopup(ICompleterItemViewContainer* complex_popup);
+  void hidePopup() const;
 
   int maxVisibleItems() const;
   void setMaxVisibleItems(int maxItems);
 
+  QString filterPattern() const;
+
  signals:
-  void highlighted(const QString &text);
-  void highlighted(const QModelIndex &index);
-  void activated(const QString &text);
-  void activated(const QModelIndex &index);
   void filterPatternChanged(const QString& filter_pattern);
+  void clicked(const QModelIndex &index);
+  void highlighted(const QModelIndex &index);
 
  public slots:
   void setFilterPattern(const QString& filter_pattern);

@@ -5,14 +5,15 @@
 //
 // [Desc]
 #include <QApplication>
+#include <QFocusEvent>
 
 #include "qtlineedit.h"
 #include "qtcompleter.h"
 
 QtLineEdit::QtLineEdit(QWidget* parent)
     : QLineEdit(parent) {
-  QObject::connect(this, SIGNAL(textEdited(const QString &)),
-                   this, SLOT(on_textEdited(const QString &)));
+  connect(this, SIGNAL(textEdited(const QString &)),
+          this, SLOT(on_textEdited(const QString &)));
 }
 
 void QtLineEdit::setQtCompleter(QtCompleter* completer) {
@@ -20,7 +21,6 @@ void QtLineEdit::setQtCompleter(QtCompleter* completer) {
     return;
 
   if (completer_) {
-    disconnect(completer_, 0, this, 0);
     completer_->setWidget(nullptr);
     if (completer_->parent() == this)
       delete completer_;
@@ -33,11 +33,6 @@ void QtLineEdit::setQtCompleter(QtCompleter* completer) {
 
   if (completer_->widget() == nullptr)
     completer_->setWidget(this);
-
-  if (hasFocus()) {
-    QObject::connect(completer_, SIGNAL(activated(QString)),
-                     this, SLOT(setText(QString)));
-  }
 }
 
 QtCompleter* QtLineEdit::qtcompleter() {
@@ -47,22 +42,16 @@ QtCompleter* QtLineEdit::qtcompleter() {
 void QtLineEdit::focusInEvent(QFocusEvent *e) {
   QLineEdit::focusInEvent(e);
 
-  if (completer_) {
+  if (completer_ &&
+      ((e->reason() == Qt::MouseFocusReason) ||
+       (e->reason() == Qt::TabFocusReason))) {
     completer_->setWidget(this);
-
-    QObject::connect(completer_, SIGNAL(activated(QString)),
-                     this, SLOT(setText(QString)));
+    completer_->setFilterPattern(text());
+    completer_->complete();
   }
-
-  completer_->setFilterPattern(text());
-  completer_->complete();
 }
 
 void QtLineEdit::focusOutEvent(QFocusEvent *e) {
-  if (completer_) {
-    QObject::disconnect(completer_, 0, this, 0);
-  }
-
   QLineEdit::focusOutEvent(e);
 }
 
