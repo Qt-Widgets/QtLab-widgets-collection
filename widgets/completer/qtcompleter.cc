@@ -406,7 +406,7 @@ bool QtCompleter::eventFilter(QObject *o, QEvent *e) {
             QKeyEvent event(QEvent::KeyPress, Qt::Key_End, Qt::NoModifier);
             (static_cast<QObject *>(d->popup))->event(&event);
             return true;
-          } else if ((curIndex.row() == 0) && (curIndex.parent().row() == -1)) {
+          } else if ((curIndex.row() == 0) && !curIndex.parent().isValid()) {
             if (d->wrap) {
               QKeyEvent event(QEvent::KeyPress, Qt::Key_End, Qt::NoModifier);
               (static_cast<QObject *>(d->popup))->event(&event);

@@ -75,8 +75,11 @@ QModelIndex CandidateItemModel::parent(const QModelIndex &index) const {
     row = parent_item->row();
   }
 
-  const void* iptr = static_cast<const void*>(parent_item);
-  return createIndex(row, 0, const_cast<void*>(iptr));
+  if (row >= 0) {
+    const void* iptr = static_cast<const void*>(parent_item);
+    return createIndex(row, 0, const_cast<void*>(iptr));
+  } else
+    return QModelIndex();
 }
 
 int CandidateItemModel::rowCount(const QModelIndex &parent) const {
