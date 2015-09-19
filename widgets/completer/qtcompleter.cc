@@ -57,6 +57,7 @@ class QtCompleterImpl : public QObject {
 
  public slots:
   void hightlighted(const QItemSelection& selection);
+  void clicked(const QModelIndex& index);
   void autoResizePopup(const QModelIndex &parent, int first, int last);
 
  public:
@@ -106,6 +107,13 @@ void QtCompleterImpl::hightlighted(const QItemSelection& selection) {
     index = selection.indexes().first();
 
   emit q->highlighted(index);
+}
+
+void QtCompleterImpl::clicked(const QModelIndex& index) {
+  if ((index.flags() & Qt::ItemIsEnabled)
+      && (index.flags() & Qt::ItemIsSelectable)) {
+    emit q->clicked(index);
+  }
 }
 
 QString QtCompleterImpl::itemText(const QModelIndex &index) const {
@@ -257,7 +265,7 @@ QAbstractItemView* QtCompleter::popup() const {
 void QtCompleter::setPopup(QAbstractItemView* popup) {
   if (d->popup) {
     disconnect(d->popup->selectionModel(), 0, d.get(), 0);
-    disconnect(d->popup, 0, this, 0);
+    disconnect(d->popup, 0, d.get(), 0);
   }
 
   if (d->popup != popup)
@@ -295,10 +303,14 @@ void QtCompleter::setPopup(QAbstractItemView* popup) {
 #endif
 
   QObject::connect(popup, SIGNAL(clicked(QModelIndex)),
-                   this, SIGNAL(clicked(QModelIndex)));
+                   d.get(), SLOT(clicked(QModelIndex)));
   QObject::connect(popup->selectionModel(),
                    SIGNAL(selectionChanged(QItemSelection,QItemSelection)),
                    d.get(), SLOT(hightlighted(QItemSelection)));
+
+  QObject::connect(this, SIGNAL(clicked(QModelIndex)),
+                   popup, SLOT(hide()));
+
   d->popup = popup;
 }
 
@@ -448,7 +460,7 @@ bool QtCompleter::eventFilter(QObject *o, QEvent *e) {
         case Qt::Key_Tab:
           d->popup->hide();
           if (curIndex.isValid())
-            emit clicked(curIndex);
+            d->clicked(curIndex);
           break;
 
         case Qt::Key_F4:

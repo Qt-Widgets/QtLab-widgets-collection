@@ -184,13 +184,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
   QObject::connect(qt_completer, &QtCompleter::clicked,
                    [line_edit, qt_completer](const QModelIndex& index) {
-                     if ((index.flags() & Qt::ItemIsEnabled)
-                         && (index.flags() & Qt::ItemIsSelectable)) {
-                       qt_completer->hidePopup();
-
-                       auto text = index.data(Qt::DisplayRole).toString();
-                       line_edit->setText(text);
-                     }
+                     auto text = index.data(Qt::DisplayRole).toString();
+                     line_edit->setText(text);
                    });
 
 
