@@ -179,7 +179,7 @@ MainWindow::MainWindow(QWidget *parent) :
   qt_completer->setModel(model);
   auto atreeview = new QTreeView(widget);
   atreeview->header()->hide();
-  qt_completer->setPopup(atreeview);
+  qt_completer->setItemView(atreeview);
   line_edit->setQtCompleter(qt_completer);
   layout->addWidget(line_edit);
   layout->addSpacing(20);

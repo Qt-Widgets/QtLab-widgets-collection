@@ -26,6 +26,7 @@ class ICompleterItemViewContainer {
   virtual QWidget* getItemViewContainer() = 0;
 };
 
+class IdentityItemViewContainer;
 class QtCompleterImpl;
 
 class QtCompleter : public QObject {
@@ -42,10 +43,8 @@ class QtCompleter : public QObject {
   void setModel(QAbstractItemModel* c);
   QAbstractItemModel* model() const;
 
-  void setPopup(QAbstractItemView* popup);
-  QAbstractItemView* popup() const;
-
-  // void setComplexPopup(ICompleterItemViewContainer* complex_popup);
+  void setItemView(QAbstractItemView* item_view);
+  QAbstractItemView* itemView();
 
   int maxVisibleItems() const;
   void setMaxVisibleItems(int maxItems);
@@ -71,6 +70,8 @@ class QtCompleter : public QObject {
 
   std::unique_ptr<QtCompleterImpl> d;
   friend class QtCompleterImpl;
+
+  friend class IdentityItemViewContainer;
 };
 
 #endif  // QTCOMPLETER_H_

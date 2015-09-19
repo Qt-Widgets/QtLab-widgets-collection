@@ -5,6 +5,7 @@
 //
 // [Desc]
 #include <QApplication>
+#include <QDebug>
 
 #include "qtlineedit.h"
 #include "qtcompleter.h"
@@ -45,8 +46,10 @@ QtCompleter* QtLineEdit::qtcompleter() {
 }
 
 void QtLineEdit::focusInEvent(QFocusEvent *e) {
+  qDebug() << "========>e: " << e;
   QLineEdit::focusInEvent(e);
 
+#if 0
   if (completer_) {
     completer_->setWidget(this);
 
@@ -56,6 +59,7 @@ void QtLineEdit::focusInEvent(QFocusEvent *e) {
 
   completer_->setFilterPattern(text());
   completer_->complete();
+#endif
 }
 
 void QtLineEdit::focusOutEvent(QFocusEvent *e) {
