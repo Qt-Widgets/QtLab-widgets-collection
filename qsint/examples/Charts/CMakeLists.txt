@@ -1,0 +1,2 @@
+add_subdirectory(simplecharts)
+add_subdirectory(simplecharts2)

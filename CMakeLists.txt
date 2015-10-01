@@ -34,3 +34,5 @@ add_subdirectory(sdi2)
 add_subdirectory(layout)
 add_subdirectory(widgets)
 add_subdirectory(qtoolbutton_defaultaction)
+
+add_subdirectory(qsint)

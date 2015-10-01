@@ -188,6 +188,12 @@ MainWindow::MainWindow(QWidget *parent) :
                      line_edit->setText(text);
                    });
 
+  QObject::connect(line_edit, &QLineEdit::editingFinished,
+                   [line_edit]() {
+                     qDebug() << "editingFinished: text = " << line_edit->text();
+                   });
+
+
 
   layout->addWidget(line_edit);
   layout->addSpacing(20);
